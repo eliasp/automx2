@@ -16,6 +16,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with automx2. If not, see <https://www.gnu.org/licenses/>.
 """
+import sdnotify
+
 from flask import Flask
 from flask_migrate import Migrate
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -46,9 +48,12 @@ def _proxy_fix():
 
 
 app = Flask(__name__)
+
+sdnotify.SystemdNotifier().notify("STATUS=Configuring automx2 server")
 app.config['SQLALCHEMY_DATABASE_URI'] = config.db_uri()
 app.config['SQLALCHEMY_ECHO'] = config.db_echo()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+sdnotify.SystemdNotifier().notify("STATUS=Setting up Flask URL rules")
 app.add_url_rule('/', view_func=SiteRoot.as_view('root'), methods=['GET'])
 app.add_url_rule(APPLE_CONFIG_ROUTE, view_func=mobileconfig.AppleView.as_view('apple'), methods=['GET'])
 app.add_url_rule(INITDB_ROUTE, view_func=InitDatabase.as_view('initdb'), methods=['DELETE', 'GET', 'POST'])
@@ -57,5 +62,13 @@ app.add_url_rule(MSOFT_ALTERNATE_ROUTE, view_func=autodiscover.OutlookView.as_vi
 app.add_url_rule(MSOFT_CONFIG_ROUTE, view_func=autodiscover.OutlookView.as_view('ms1'), methods=['POST'])
 _proxy_fix()
 
+sdnotify.SystemdNotifier().notify("STATUS=Initializing Flask application")
+
 db.init_app(app)
+
+sdnotify.SystemdNotifier().notify("STATUS=Applying DB migrations")
+
 migrate = Migrate(app, db)
+
+sdnotify.SystemdNotifier().notify("STATUS=automx2 server is ready and accepting requests")
+sdnotify.SystemdNotifier().notify("READY=1")

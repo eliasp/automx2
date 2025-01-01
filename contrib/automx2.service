@@ -10,6 +10,7 @@ ExecStart=/srv/www/automx2/bin/flask run --host=127.0.0.1 --port=4243
 Restart=always
 User=automx2
 WorkingDirectory=/var/lib/automx2
+Type=notify
 
 [Install]
 WantedBy=multi-user.target
